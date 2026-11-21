@@ -1,0 +1,115 @@
+{
+  "name": "EMC — Envío de comunicaciones (Gmail / WhatsApp)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "comunicaciones",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook-comunicaciones",
+      "name": "Webhook comunicaciones",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "comunicaciones"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "typeValidation": "strict" },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.canal }}",
+              "rightValue": "email",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "if-email",
+      "name": "¿Canal email?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ raw: $json.contenido }) }}",
+        "options": {}
+      },
+      "id": "gmail-send",
+      "name": "Enviar por Gmail",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [700, 200],
+      "notes": "Adaptar el body 'raw' al formato MIME base64 que exige Gmail API."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v20.0/{{ $env.WHATSAPP_PHONE_ID }}/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "whatsAppApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ messaging_product: 'whatsapp', to: $json.whatsapp, type: 'text', text: { body: $json.contenido } }) }}",
+        "options": {}
+      },
+      "id": "whatsapp-send",
+      "name": "Enviar por WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [700, 420],
+      "notes": "Usa WhatsApp Cloud API. Configura WHATSAPP_PHONE_ID en el entorno de n8n."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.API_URL || 'http://api:8000' }}/api/v1/webhooks/estado-comunicacion",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ comunicacion_id: $json.comunicacion_id, estado: 'enviado' }) }}",
+        "options": {},
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Webhook-Secret", "value": "={{ $env.WEBHOOK_SECRET }}" }
+          ]
+        }
+      },
+      "id": "confirmar-envio",
+      "name": "Confirmar envío a la API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [940, 300]
+    }
+  ],
+  "connections": {
+    "Webhook comunicaciones": {
+      "main": [[{ "node": "¿Canal email?", "type": "main", "index": 0 }]]
+    },
+    "¿Canal email?": {
+      "main": [
+        [{ "node": "Enviar por Gmail", "type": "main", "index": 0 }],
+        [{ "node": "Enviar por WhatsApp", "type": "main", "index": 0 }]
+      ]
+    },
+    "Enviar por Gmail": {
+      "main": [[{ "node": "Confirmar envío a la API", "type": "main", "index": 0 }]]
+    },
+    "Enviar por WhatsApp": {
+      "main": [[{ "node": "Confirmar envío a la API", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "active": false
+}

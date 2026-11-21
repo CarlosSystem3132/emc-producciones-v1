@@ -1,0 +1,146 @@
+<header>
+  <div class="navbar">
+    <a href="/" class="logo" aria-label="EXPOINCO - Inicio">
+      <div class="logo-img-wrapper">
+        <div class="logo-img-glow"></div>
+        <img src="/assets/expoinco-logo.jpg" alt="EXPOINCO Logo" class="logo-img" />
+      </div>
+      <div>
+        <div class="logo-text">EXPO<span>INCO</span></div>
+        <div class="logo-sub">Inmobiliaria &amp; Construcción Internacional</div>
+      </div>
+    </a>
+
+    <div class="navlinks-desktop">
+      <nav>
+        <ul>
+          <li><a href="#nosotros">Nosotros</a></li>
+          <li><a href="#rubros">Rubros</a></li>
+          <li><a href="#plano">Plano de stands</a></li>
+          <li><a href="#paquetes">Paquetes</a></li>
+          <li><a href="#sedes">Sedes</a></li>
+          <li><a href="#auspiciadores">Auspicios</a></li>
+          <li><a href="#contacto">Contacto</a></li>
+        </ul>
+      </nav>
+
+      <button type="button" class="nav-cta" data-open-registro>
+        <span>Registrar empresa</span>
+      </button>
+      <a href="#plano" class="nav-cta">
+        <span>Reservar stand</span>
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M5 12h14"></path>
+          <path d="m12 5 7 7-7 7"></path>
+        </svg>
+      </a>
+
+      <button
+        class="mobile-menu-btn"
+        id="mobileMenuBtn"
+        type="button"
+        aria-label="Abrir menú de opciones"
+        aria-expanded="false"
+        aria-controls="mobileDrawer"
+      >
+        <span class="hamburger-bar"></span>
+        <span class="hamburger-bar"></span>
+        <span class="hamburger-bar"></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="mobile-drawer" id="mobileDrawer" aria-hidden="true">
+  <div class="mobile-drawer-backdrop" id="mobileDrawerBackdrop"></div>
+  <div class="mobile-drawer-panel">
+    <div class="mobile-drawer-head">
+      <div class="logo-text" style="font-size: 1.3rem">EXPO<span>INCO</span></div>
+      <button
+        class="mobile-drawer-close"
+        id="mobileDrawerClose"
+        type="button"
+        aria-label="Cerrar menú"
+      >
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <nav class="mobile-nav">
+      <ul>
+        <li><a href="#nosotros" class="mobile-link"><span>01</span> Nosotros &amp; Experiencia</a></li>
+        <li><a href="#rubros" class="mobile-link"><span>02</span> Directorio de Rubros</a></li>
+        <li><a href="#plano" class="mobile-link"><span>03</span> Plano Interactivo de Stands</a></li>
+        <li><a href="#paquetes" class="mobile-link"><span>04</span> Paquetes &amp; Tarifas</a></li>
+        <li><a href="#sedes" class="mobile-link"><span>05</span> Sedes Internacionales</a></li>
+        <li><a href="#auspiciadores" class="mobile-link"><span>06</span> Auspiciadores Oficiales</a></li>
+        <li><a href="#contacto" class="mobile-link"><span>07</span> Contacto &amp; Teléfonos</a></li>
+      </ul>
+    </nav>
+
+    <div class="mobile-drawer-foot">
+      <a href="#plano" class="btn btn-primary mobile-drawer-cta">Reservar mi Stand →</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  const header = document.querySelector('header');
+  if (header) {
+    const onScroll = () => header.classList.toggle('scrolled', window.scrollY > 40);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  }
+
+  const menuBtn = document.getElementById('mobileMenuBtn');
+  const drawer = document.getElementById('mobileDrawer');
+  const drawerClose = document.getElementById('mobileDrawerClose');
+  const drawerBackdrop = document.getElementById('mobileDrawerBackdrop');
+  const drawerLinks = document.querySelectorAll('.mobile-link, .mobile-drawer-cta');
+
+  function openDrawer() {
+    drawer?.classList.add('open');
+    drawer?.setAttribute('aria-hidden', 'false');
+    menuBtn?.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
+    drawerClose?.focus();
+  }
+
+  function closeDrawer() {
+    if (!drawer?.classList.contains('open')) return;
+    drawer.classList.remove('open');
+    drawer.setAttribute('aria-hidden', 'true');
+    menuBtn?.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+    menuBtn?.focus();
+  }
+
+  menuBtn?.addEventListener('click', openDrawer);
+  drawerClose?.addEventListener('click', closeDrawer);
+  drawerBackdrop?.addEventListener('click', closeDrawer);
+  drawerLinks.forEach((el) => el.addEventListener('click', closeDrawer));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeDrawer();
+  });
+</script>

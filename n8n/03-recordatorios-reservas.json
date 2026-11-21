@@ -1,0 +1,80 @@
+{
+  "name": "EMC — Recordatorios de reservas por expirar",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "minutes", "minutesInterval": 10 }]
+        }
+      },
+      "id": "cron-recordatorios",
+      "name": "Cada 10 minutos",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.API_URL || 'http://api:8000' }}/api/v1/reservas/por-expirar?en_minutos=15",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "consultar-por-expirar",
+      "name": "Consultar reservas por expirar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 300],
+      "notes": "Header Auth: Authorization = Bearer <token admin>."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "typeValidation": "strict" },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.length }}",
+              "rightValue": 0,
+              "operator": { "type": "number", "operation": "gt" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "if-hay-reservas",
+      "name": "¿Hay reservas?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "content": "## Reservas por expirar\n\nSe detectaron reservas temporales por expirar. Revisa el panel de administración para confirmar o extender las reservas en negociación.",
+        "options": {}
+      },
+      "id": "notificar-ejecutivo",
+      "name": "Notificar al equipo",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [960, 200],
+      "notes": "Sustituir por Gmail/WhatsApp/Slack: enviar aviso al ejecutivo asignado (ejecutivo_id) con los datos de cada reserva."
+    }
+  ],
+  "connections": {
+    "Cada 10 minutos": {
+      "main": [[{ "node": "Consultar reservas por expirar", "type": "main", "index": 0 }]]
+    },
+    "Consultar reservas por expirar": {
+      "main": [[{ "node": "¿Hay reservas?", "type": "main", "index": 0 }]]
+    },
+    "¿Hay reservas?": {
+      "main": [
+        [{ "node": "Notificar al equipo", "type": "main", "index": 0 }],
+        []
+      ]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "active": false
+}
