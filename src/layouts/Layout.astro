@@ -1,0 +1,101 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'EXPOINCO 2027 | 1ra Expoinmobiliaria y Construcción Internacional en El Alto',
+  description = 'La 1ra Expoinmobiliaria y Construcción Internacional en El Alto, Bolivia. 150+ empresas líderes, 52 stands y rondas de negocios internacionales.',
+} = Astro.props;
+
+// Píxeles de publicidad (opcionales, configurados por variables de entorno)
+const metaPixelId = import.meta.env.PUBLIC_META_PIXEL_ID ?? '';
+const gtagId = import.meta.env.PUBLIC_GTAG_ID ?? '';
+
+// Open Graph / Twitter exigen URLs absolutas (requiere `site` en astro.config.mjs).
+const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
+const ogImage = new URL('/assets/expoinco-logo.jpg', Astro.site ?? Astro.url);
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0e1015" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/jpeg" href="/assets/expoinco-logo.jpg" />
+    <link rel="apple-touch-icon" href="/assets/expoinco-logo.jpg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Anton&family=JetBrains+Mono:wght@400;600;700&family=Work+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="es_BO" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+    <!-- Sin JavaScript el preloader taparía todo el sitio: se oculta. -->
+    <noscript><style>.splash-screen { display: none !important; }</style></noscript>
+
+    <!-- Meta Pixel (solo si PUBLIC_META_PIXEL_ID está configurado) -->
+    {metaPixelId && (
+      <script is:inline define:vars={{ pixelId: metaPixelId }}>
+        !(function (f, b, e, v, n, t, s) {
+          if (f.fbq) return;
+          n = f.fbq = function () {
+            n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+          };
+          if (!f._fbq) f._fbq = n;
+          n.push = n;
+          n.loaded = !0;
+          n.version = '2.0';
+          n.queue = [];
+          t = b.createElement(e);
+          t.async = !0;
+          t.src = v;
+          s = b.getElementsByTagName(e)[0];
+          s.parentNode.insertBefore(t, s);
+        })(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', pixelId);
+        fbq('track', 'PageView');
+      </script>
+    )}
+
+    <!-- Google Ads / GA4 (solo si PUBLIC_GTAG_ID está configurado) -->
+    {gtagId && (
+      <>
+        <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${gtagId}`} />
+        <script is:inline define:vars={{ tagId: gtagId }}>
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            window.dataLayer.push(arguments);
+          }
+          window.gtag = gtag;
+          gtag('js', new Date());
+          gtag('config', tagId);
+        </script>
+      </>
+    )}
+  </head>
+  <body>
+    {/* Atribución de marketing: captura UTM/click ids en el primer toque (cliente) */}
+    <script>
+      import { capturarUTM } from '../utils/utm';
+      capturarUTM();
+    </script>
+    <slot />
+  </body>
+</html>

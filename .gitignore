@@ -1,0 +1,41 @@
+# Dependencias
+node_modules/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# Entorno y secretos
+.env
+.env.*
+!.env.example
+
+# Build Astro
+dist/
+.astro/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.override.yml
+
+# Base de datos local
+*.sqlite
+*.sqlite3
+*.db
+
+# Archivos sensibles
+*.pem
+*.key
+*.crt
+credentials.json
+client_secret.json

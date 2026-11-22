@@ -1,0 +1,133 @@
+---
+const brands = [
+  'URUBÓ VILLAGE',
+  'SOBOCE',
+  'KOMATSU',
+  'MONOPOL',
+  'GLADYMAR',
+  'PLAYA TURQUESA',
+  'FINNING CAT',
+  'COBOCE',
+  'ACEROS AREQUIPA',
+  'GRUPO SION',
+  'SCHNEIDER ELECTRIC',
+  'FABOCE',
+  'SIKA BOLIVIA',
+  'LAS PALMAS DEL URUBÓ',
+  'FANCESA',
+  'EL PAHUICHI',
+];
+---
+
+<section class="hero">
+  <div class="hero-diagonal"></div>
+  <div class="blueprint-grid"></div>
+
+  <div class="wrap hero-inner" style="padding: 40px 28px 60px">
+    <div>
+      <div class="eyebrow">21, 22 y 23 de abril de 2027</div>
+      <h1>
+        Expo Inmobiliaria<br />
+        &amp; <span class="accent">Construcción</span><br />
+        Internacional
+      </h1>
+      <p class="hero-sub">
+        El punto de encuentro entre urbanizadoras, constructoras, proveedores de
+        maquinaria y profesionales de la construcción de Bolivia y Latinoamérica.
+      </p>
+
+      <div class="hero-facts">
+        <div class="fact">
+          <div class="k">Sede</div>
+          <div class="v">Polideportivo Héroes de Octubre</div>
+        </div>
+        <div class="fact">
+          <div class="k">Ciudad</div>
+          <div class="v">El Alto, La Paz - Bolivia</div>
+        </div>
+        <div class="fact">
+          <div class="k">Reserva de stand</div>
+          <div class="v">$us 98 / m²</div>
+        </div>
+      </div>
+
+      <div class="hero-ctas">
+        <a href="#plano" class="btn btn-primary">Reservar mi stand →</a>
+        <button id="openBrochureBtn" class="btn btn-outline" type="button">
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            style="margin-right: 6px"
+            aria-hidden="true"
+          >
+            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+          </svg>
+          Ver Brochure Oficial
+        </button>
+      </div>
+    </div>
+
+    <div class="countdown">
+      <div class="countdown-title">
+        <span>Faltan</span>
+        <span id="cd-status">21-23 abril 2027</span>
+      </div>
+      <div class="countdown-grid">
+        <div class="cd-cell">
+          <div class="cd-num" id="cd-days">00</div>
+          <div class="cd-label">Días</div>
+        </div>
+        <div class="cd-cell">
+          <div class="cd-num" id="cd-hours">00</div>
+          <div class="cd-label">Hrs</div>
+        </div>
+        <div class="cd-cell">
+          <div class="cd-num" id="cd-mins">00</div>
+          <div class="cd-label">Min</div>
+        </div>
+        <div class="cd-cell">
+          <div class="cd-num" id="cd-secs">00</div>
+          <div class="cd-label">Seg</div>
+        </div>
+      </div>
+      <div class="countdown-venue">
+        Ciudad de El Alto · Santa Cruz · Asunción (Paraguay) · Miami
+      </div>
+    </div>
+  </div>
+
+  <!-- Marquee Ticker de Marcas Participantes -->
+  <div class="brands-marquee-strip">
+    <div class="marquee-label"><span>EMPRESAS LÍDERES</span></div>
+    <div class="marquee-track-wrap">
+      <div class="marquee-track">
+        {brands.map((brand) => (
+          <span class="m-item"><span class="m-dot"></span>{brand}</span>
+        ))}
+        {/* Copia para el loop infinito: se oculta a lectores de pantalla */}
+        {brands.map((brand) => (
+          <span class="m-item" aria-hidden="true"><span class="m-dot"></span>{brand}</span>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { startCountdown } from '../utils/countdown';
+
+  startCountdown(
+    { days: 'cd-days', hours: 'cd-hours', mins: 'cd-mins', secs: 'cd-secs' },
+    () => {
+      const status = document.getElementById('cd-status');
+      if (status) status.textContent = '¡La expo ya comenzó!';
+    },
+  );
+</script>

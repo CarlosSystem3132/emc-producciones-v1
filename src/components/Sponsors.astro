@@ -1,0 +1,117 @@
+---
+const sponsors = [
+  {
+    tag: 'Entidad Gremial',
+    acronym: 'CNC BOLIVIA',
+    name: 'Cámara Nacional de Comercio',
+    logo: '/assets/sponsors/cnc-bolivia.webp',
+    url: 'https://www.facebook.com/cncbol/?locale=es_LA',
+  },
+  {
+    tag: 'Cámara Sectorial',
+    acronym: 'CABOCO',
+    name: 'Cámara Boliviana de la Construcción',
+    logo: '/assets/sponsors/caboco.webp',
+    url: 'https://www.facebook.com/camarabolivianadelaconstruccion/?locale=es_LA',
+  },
+  {
+    tag: 'Sector Industrial',
+    acronym: 'CNI BOLIVIA',
+    name: 'Cámara Nacional de Industrias',
+    logo: '/assets/sponsors/cni-bolivia.webp',
+    url: 'https://www.facebook.com/cniboliviaindustria/?locale=es_LA',
+  },
+  {
+    tag: 'Colegio Profesional',
+    acronym: 'CIC BOLIVIA',
+    name: 'Colegio de Ingenieros Civiles',
+    logo: '/assets/sponsors/cic-bolivia.webp',
+    url: 'https://www.facebook.com/ColegioDeIngenierosCivilesDeBolivia/?locale=es_LA',
+  },
+  {
+    tag: 'Colegio Profesional',
+    acronym: 'CAB',
+    name: 'Colegio de Arquitectos de Bolivia',
+    logo: '/assets/sponsors/cab-arquitectos.webp',
+    url: 'https://cab.org.bo/web/',
+  },
+  {
+    tag: 'Colegio Profesional',
+    acronym: 'CIEB',
+    name: 'Colegio de Ingenieros Estructurales',
+    logo: '/assets/sponsors/cieb-bolivia.webp',
+    url: 'https://www.facebook.com/ColegiodeIngenierosEstructuralesdeBolivia/?locale=es_LA',
+  },
+];
+---
+
+<section class="sponsors" id="auspiciadores">
+  <div class="wrap">
+    <div class="sponsors-intro">
+      <span class="section-tag">Respaldo Institucional</span>
+      <h2>Auspician y Patrocinan</h2>
+      <p>
+        Las principales cámaras empresariales, entidades gremiales y colegios de
+        profesionales avalan e impulsan la
+        <strong>Expo Inmobiliaria &amp; Construcción Internacional 2027</strong>.
+      </p>
+    </div>
+
+    <div class="sponsors-grid">
+      {
+        sponsors.map((sponsor) => (
+          <a
+            href={sponsor.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="sponsor-card"
+            title={`Visitar ${sponsor.name}`}
+          >
+            <div class="sponsor-top-meta">
+              <span class="sponsor-badge-tag">{sponsor.tag}</span>
+              <span class="sponsor-arrow-icon">
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M7 17L17 7M17 7H7M17 7V17" />
+                </svg>
+              </span>
+            </div>
+
+            <div class="sponsor-logo-box">
+              <img src={sponsor.logo} alt={`Logo ${sponsor.name}`} loading="lazy" decoding="async" />
+            </div>
+
+            <div class="sponsor-content">
+              <span class="sponsor-acronym">{sponsor.acronym}</span>
+              <p class="sponsor-name">{sponsor.name}</p>
+              <span class="sponsor-link-label">Sitio Oficial →</span>
+            </div>
+          </a>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Antes era un style inline con comillas escapadas dentro del .map() */
+  .sponsor-link-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--yellow-dark);
+    font-weight: 700;
+    margin-top: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+</style>

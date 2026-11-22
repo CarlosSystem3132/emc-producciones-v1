@@ -1,0 +1,77 @@
+# EMC Producciones — stack completo (docs/03-arquitectura.md)
+# Uso:  docker compose up -d
+# Los servicios n8n y minio son opcionales:  docker compose --profile tools up -d
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-emc_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cambiar_esta_contraseña}
+      POSTGRES_DB: ${POSTGRES_DB:-emc_producciones}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-emc_user} -d ${POSTGRES_DB:-emc_producciones}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: ./backend
+    env_file: ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-emc_user}:${POSTGRES_PASSWORD:-cambiar_esta_contraseña}@db:5432/${POSTGRES_DB:-emc_producciones}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+  # --- Servicios opcionales (Fase 2+) ---
+  minio:
+    image: minio/minio:latest
+    profiles: ["tools"]
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - miniodata:/data
+
+  n8n:
+    image: n8nio/n8n:latest
+    profiles: ["tools"]
+    environment:
+      # ⚠️ Las variables N8N_BASIC_AUTH_* están OBSOLETAS y son ignoradas.
+      # Se reemplazan por la configuración de cuenta de propietario nativa.
+      # Al primer arranque, n8n te pedirá crear el owner en la web.
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:-cambiar_esta_clave_larga_de_32_chars}
+      - N8N_DEFAULT_ADMIN_EMAIL=${N8N_DEFAULT_ADMIN_EMAIL:-admin@local.test}
+      - N8N_DEFAULT_ADMIN_PASSWORD=${N8N_DEFAULT_ADMIN_PASSWORD:-Admin123*}
+
+      # URL pública de n8n (para que los webhooks generen la URL correcta)
+      - WEBHOOK_URL=${N8N_WEBHOOK_URL:-http://localhost:5678/}
+
+      # Variables que consumen TUS workflows (los JSON las leen con $env.)
+      - API_URL=http://api:8000
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET:-local_webhook_secret_cambiar_esto}
+      - WHATSAPP_PHONE_ID=${WHATSAPP_PHONE_ID:-0000000000}
+    ports:
+      - "5678:5678"
+    volumes:
+      - n8ndata:/home/node/.n8n
+
+volumes:
+  pgdata:
+  miniodata:
+  n8ndata:

@@ -1,0 +1,74 @@
+---
+import Layout from '../layouts/Layout.astro';
+import IntroPreloader from '../components/IntroPreloader.astro';
+import Header from '../components/Header.astro';
+import Hero from '../components/Hero.astro';
+import AboutExpo from '../components/AboutExpo.astro';
+import RubrosDirectory from '../components/RubrosDirectory.tsx';
+import InteractivePlano from '../components/InteractivePlano.tsx';
+import Packages from '../components/Packages.astro';
+import Expansion from '../components/Expansion.astro';
+import Sponsors from '../components/Sponsors.astro';
+import ContactFooter from '../components/ContactFooter.astro';
+import BrochureModal from '../components/BrochureModal.tsx';
+import RegistroModal from '../components/RegistroModal.tsx';
+import ChatFlotante from '../components/ChatFlotante.tsx';
+import LiveStats from '../components/LiveStats.tsx';
+---
+
+<Layout>
+  <IntroPreloader />
+  <Header />
+
+  <main tabindex="-1">
+    <Hero />
+    <LiveStats client:visible />
+
+    <section class="sectors">
+      <div class="wrap sector-row">
+        <span class="sector-tag">Urbanizaciones &amp; Condominios</span>
+        <span class="sector-tag">Inmobiliaria &amp; Proyectos</span>
+        <span class="sector-tag">Diseño, Estructuras &amp; Construcción</span>
+        <span class="sector-tag">Maquinaria Pesada &amp; Equipos</span>
+        <span class="sector-tag">Materiales &amp; Obra Fina</span>
+        <span class="sector-tag">Domótica &amp; Seguridad</span>
+      </div>
+    </section>
+
+    <AboutExpo />
+
+    <!-- Islas interactivas en React -->
+    <RubrosDirectory client:visible />
+    <div id="plano">
+      <InteractivePlano client:visible />
+    </div>
+
+    <Packages />
+    <Expansion />
+    <Sponsors />
+    <ContactFooter />
+
+    <!-- Botón flotante WhatsApp -->
+    <div class="whatsapp-float-container">
+      <a
+        href="https://wa.me/59168166068?text=Hola,%20deseo%20m%C3%A1s%20informaci%C3%B3n%20sobre%20la%20Expo%20Inmobiliaria%20y%20Construcci%C3%B3n%202027."
+        target="_blank"
+        rel="noopener noreferrer"
+        class="whatsapp-float"
+        aria-label="Contactar por WhatsApp"
+      >
+        <div class="whatsapp-float-pulse"></div>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2zM17.5 14.33c-.24.68-1.2 1.26-1.68 1.34-.46.07-.99.1-3.08-.75-2.45-1-4.04-3.5-4.16-3.66-.12-.17-1-1.34-1-2.55s.63-1.81.86-2.05c.23-.24.5-.3.67-.3.17 0 .34.01.49.01.16 0 .37-.06.57.43.21.5.71 1.73.77 1.86.06.12.1.27.02.43-.08.17-.12.27-.24.41-.12.14-.26.31-.37.42-.12.12-.25.25-.11.49.14.24.63 1.04 1.35 1.68.93.83 1.71 1.09 1.95 1.21.24.12.38.1.52-.06.14-.17.6-1.01.76-1.35.16-.35.32-.29.54-.21.22.08 1.4.66 1.64.78.24.12.4.18.46.28.06.1.06.6-.18 1.28z"></path>
+        </svg>
+      </a>
+      <div class="whatsapp-tooltip">
+        <span class="whatsapp-tooltip-dot"></span>¿Consultas? Escríbenos
+      </div>
+    </div>
+  </main>
+
+  <BrochureModal client:load />
+  <RegistroModal client:load />
+  <ChatFlotante client:load />
+</Layout>

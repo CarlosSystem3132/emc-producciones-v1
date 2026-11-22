@@ -1,0 +1,53 @@
+# Render Blueprint — API FastAPI de EMC Producciones (plan gratuito)
+#
+# Uso: crear un "Blueprint" en Render apuntando a este repositorio.
+# La base de datos va aparte (Neon/Supabase gratis) — ver GUIA-DESPLIEGUE.md.
+#
+# Notas:
+# - El plan free duerme el servicio tras 15 min de inactividad (~1 min al despertar).
+# - startCommand ejecuta las migraciones de Alembic antes de arrancar la API.
+# - Las variables marcadas sync: false se configuran manualmente en el dashboard
+#   (o con `render.yaml` + valores generados para secretos).
+
+services:
+  - type: web
+    name: emc-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /health
+    startCommand: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"
+    envVars:
+      # Base de datos (cadena de conexión de Neon/Supabase)
+      # Ejemplo: postgresql+psycopg://user:pass@host/db?sslmode=require
+      - key: DATABASE_URL
+        sync: false
+
+      # Seguridad — Render puede generarlos automáticamente
+      - key: JWT_SECRET
+        generateValue: true
+      - key: WEBHOOK_SECRET
+        generateValue: true
+
+      # Admin inicial (seed automático al arrancar)
+      - key: SEED_ADMIN_EMAIL
+        sync: false
+      - key: SEED_ADMIN_PASSWORD
+        generateValue: true
+
+      # n8n local expuesto con Cloudflare Tunnel (ver GUIA-DESPLIEGUE.md)
+      - key: N8N_WEBHOOK_URL
+        sync: false
+
+      # Router de IA gratuito (orden: gemini → groq → openrouter → deepseek)
+      - key: IA_GEMINI_KEY
+        sync: false
+      - key: IA_GROQ_KEY
+        sync: false
+      - key: IA_OPENROUTER_KEY
+        sync: false
+
+      # Orígenes CORS permitidos (tu web en Hostinger + desarrollo local)
+      - key: CORS_ORIGINS
+        value: https://www.expoinmobiliariayconstruccion.com,http://localhost:4321
