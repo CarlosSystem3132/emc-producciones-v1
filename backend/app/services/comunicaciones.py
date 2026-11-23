@@ -137,9 +137,26 @@ def registrar_envio(
     if motivo:
         return None, motivo
 
+    # 1) Registrar primero para obtener el ID: n8n lo necesita para confirmar
+    #    el estado de vuelta en /webhooks/estado-comunicacion (docs/14).
+    comunicacion = Comunicacion(
+        empresa_id=empresa.id,
+        lead_id=lead_id,
+        contacto_id=contacto.id if contacto else None,
+        canal=canal,
+        plantilla_id=plantilla.id,
+        contenido=contenido_renderizado,
+        estado=EstadoComunicacion.pendiente,
+        agente=agente,
+    )
+    db.add(comunicacion)
+    db.flush()  # obtiene comunicacion.id sin confirmar la transacción
+
+    # 2) Despachar a n8n con el ID y el destinatario reales.
     exito = despachar_n8n(
         "comunicacion.enviar",
         {
+            "comunicacion_id": str(comunicacion.id),
             "canal": canal.value,
             "empresa": empresa.razon_social,
             "contacto": contacto.nombre if contacto else None,
@@ -148,16 +165,5 @@ def registrar_envio(
             "contenido": contenido_renderizado,
         },
     )
-
-    comunicacion = Comunicacion(
-        empresa_id=empresa.id,
-        lead_id=lead_id,
-        contacto_id=contacto.id if contacto else None,
-        canal=canal,
-        plantilla_id=plantilla.id,
-        contenido=contenido_renderizado,
-        estado=EstadoComunicacion.enviado if exito else EstadoComunicacion.pendiente,
-        agente=agente,
-    )
-    db.add(comunicacion)
+    comunicacion.estado = EstadoComunicacion.enviado if exito else EstadoComunicacion.pendiente
     return comunicacion, None

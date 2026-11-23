@@ -16,6 +16,8 @@ from app.api.deps import get_current_user, require_admin
 from app.db.session import get_db
 from app.models.common import EstadoNotificacion, EstadoReserva
 from app.models.comunicaciones import Notificacion
+from app.models.crm import Contacto, Lead
+from app.models.inventario import Stand
 from app.models.reserva import Reserva
 from app.models.user import Usuario
 
@@ -44,10 +46,15 @@ class ReservaPorExpirar(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
-    empresa_id: uuid.UUID
-    stand_id: uuid.UUID
-    ejecutivo_id: uuid.UUID | None = None
+    empresa: str | None = None
+    stand: str | None = None
+    contacto: str | None = None
+    whatsapp: str | None = None
+    email: str | None = None
+    canal_preferido: str | None = None
     fecha_expiracion: datetime | None = None
+    minutos_restantes: int | None = None
+    mensaje: str | None = None
 
 
 @router.get("/notificaciones", response_model=NotificacionList)
@@ -95,10 +102,14 @@ def reservas_por_expirar(
     db: Session = Depends(get_db),
     _: Usuario = Depends(require_admin),
     en_minutos: int = Query(default=15, ge=1, le=120),
-) -> list[Reserva]:
-    """Bloqueos temporales que expiran dentro de N minutos (recordatorios n8n)."""
+) -> list[ReservaPorExpirar]:
+    """Bloqueos temporales que expiran dentro de N minutos (recordatorios n8n).
+
+    Devuelve para cada reserva el contacto a recordar (WhatsApp/email) y un
+    mensaje preformateado, para que n8n solo tenga que enviarlo (docs/14).
+    """
     ahora = datetime.now(timezone.utc)
-    return list(
+    reservas = list(
         db.scalars(
             select(Reserva).where(
                 Reserva.estado == EstadoReserva.bloqueado,
@@ -107,3 +118,49 @@ def reservas_por_expirar(
             ).order_by(Reserva.fecha_expiracion)
         )
     )
+
+    salida: list[ReservaPorExpirar] = []
+    for r in reservas:
+        empresa = db.get(Empresa, r.empresa_id)
+        stand = db.get(Stand, r.stand_id)
+        contacto: Contacto | None = None
+        if r.lead_id:
+            lead = db.get(Lead, r.lead_id)
+            if lead is not None and lead.contacto_id:
+                contacto = db.get(Contacto, lead.contacto_id)
+        if contacto is None and empresa is not None and empresa.contactos:
+            contacto = empresa.contactos[0]
+
+        minutos = (
+            max(0, int((r.fecha_expiracion - ahora).total_seconds() // 60))
+            if r.fecha_expiracion
+            else None
+        )
+        whatsapp = contacto.whatsapp if contacto else None
+        email = contacto.email if contacto else None
+        canal_preferido = "whatsapp" if whatsapp else ("email" if email else None)
+        if canal_preferido is None:
+            continue  # sin canal de contacto: no hay a quién recordar
+        empresa_nombre = empresa.razon_social if empresa else "tu empresa"
+        stand_codigo = stand.codigo if stand else ""
+        mensaje = (
+            f"⏰ Recordatorio EXPOINCO 2027: el bloqueo temporal del stand "
+            f"{stand_codigo} de {empresa_nombre} vence en ~{minutos} min. "
+            f"Confirma la reserva con tu ejecutivo antes de que expire. "
+            f"— EMC Producciones"
+        )
+        salida.append(
+            ReservaPorExpirar(
+                id=r.id,
+                empresa=empresa_nombre,
+                stand=stand_codigo,
+                contacto=contacto.nombre if contacto else None,
+                whatsapp=whatsapp,
+                email=email,
+                canal_preferido=canal_preferido,
+                fecha_expiracion=r.fecha_expiracion,
+                minutos_restantes=minutos,
+                mensaje=mensaje,
+            )
+        )
+    return salida

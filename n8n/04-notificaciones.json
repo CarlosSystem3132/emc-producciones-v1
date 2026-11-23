@@ -78,7 +78,7 @@
         "nodeCredentialType": "gmailApi",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ raw: $json.mensaje, to: $json.para }) }}",
+        "jsonBody": "={{ JSON.stringify({ raw: $json.raw }) }}",
         "options": {}
       },
       "id": "notif-email",
@@ -90,6 +90,19 @@
         200
       ],
       "notes": "Adaptar el body 'raw' al formato MIME base64 que exige Gmail API."
+    },
+    {
+      "parameters": {
+        "jsCode": "const subject = \"Notificaci\\u00f3n EMC \\u2014 EXPOINCO 2027\";\nreturn $input.all().map((item) => {\n  const d = item.json || {};\n  const to = d.email || '';\n  const body = d.contenido ?? d.mensaje ?? '';\n  const b64 = (s) => Buffer.from(s, 'utf-8').toString('base64');\n  const mime =\n    'MIME-Version: 1.0\\r\\n' +\n    'Content-Type: text/plain; charset=\"UTF-8\"\\r\\n' +\n    'Content-Transfer-Encoding: 8bit\\r\\n' +\n    'To: ' + to + '\\r\\n' +\n    'Subject: =?UTF-8?B?' + b64(subject) + '?=\\r\\n' +\n    '\\r\\n' + body;\n  const raw = b64(mime).replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');\n  return { json: { ...d, raw } };\n});\n"
+      },
+      "id": "prep-email-04",
+      "name": "Preparar correo MIME",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        200
+      ]
     }
   ],
   "connections": {
@@ -113,6 +126,17 @@
             "index": 0
           }
         ],
+        [
+          {
+            "node": "Preparar correo MIME",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar correo MIME": {
+      "main": [
         [
           {
             "node": "Enviar correo al ejecutivo",

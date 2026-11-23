@@ -16,7 +16,7 @@ from app.api.deps import get_current_user, require_admin
 from app.db.session import get_db
 from app.models.common import EstadoCampana, EstadoComunicacion
 from app.models.comunicaciones import Campana, Comunicacion, Plantilla
-from app.models.crm import Empresa
+from app.models.crm import Contacto, Empresa
 from app.models.user import Usuario
 from app.schemas.comunicacion import (
     CampanaCreate,
@@ -141,11 +141,16 @@ def despachar_campana(
     enviadas = 0
     for comunicacion in pendientes:
         empresa = db.get(Empresa, comunicacion.empresa_id)
+        contacto = db.get(Contacto, comunicacion.contacto_id) if comunicacion.contacto_id else None
         exito = despachar_n8n(
             "comunicacion.enviar",
             {
+                "comunicacion_id": str(comunicacion.id),
                 "canal": comunicacion.canal.value,
                 "empresa": empresa.razon_social if empresa else None,
+                "contacto": contacto.nombre if contacto else None,
+                "email": contacto.email if contacto else None,
+                "whatsapp": contacto.whatsapp if contacto else None,
                 "contenido": comunicacion.contenido,
                 "campana": campana.nombre,
             },

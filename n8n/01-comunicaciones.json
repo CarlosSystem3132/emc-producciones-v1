@@ -12,18 +12,27 @@
       "name": "Webhook comunicaciones",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [240, 300],
+      "position": [
+        240,
+        300
+      ],
       "webhookId": "comunicaciones"
     },
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "typeValidation": "strict" },
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
           "conditions": [
             {
               "leftValue": "={{ $json.canal }}",
               "rightValue": "email",
-              "operator": { "type": "string", "operation": "equals" }
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
             }
           ],
           "combinator": "and"
@@ -33,7 +42,10 @@
       "name": "¿Canal email?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [460, 300]
+      "position": [
+        460,
+        300
+      ]
     },
     {
       "parameters": {
@@ -43,14 +55,17 @@
         "nodeCredentialType": "gmailApi",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ raw: $json.contenido }) }}",
+        "jsonBody": "={{ JSON.stringify({ raw: $json.raw }) }}",
         "options": {}
       },
       "id": "gmail-send",
       "name": "Enviar por Gmail",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [700, 200],
+      "position": [
+        700,
+        200
+      ],
       "notes": "Adaptar el body 'raw' al formato MIME base64 que exige Gmail API."
     },
     {
@@ -68,7 +83,10 @@
       "name": "Enviar por WhatsApp",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [700, 420],
+      "position": [
+        700,
+        420
+      ],
       "notes": "Usa WhatsApp Cloud API. Configura WHATSAPP_PHONE_ID en el entorno de n8n."
     },
     {
@@ -77,12 +95,15 @@
         "url": "={{ $env.API_URL || 'http://api:8000' }}/api/v1/webhooks/estado-comunicacion",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ comunicacion_id: $json.comunicacion_id, estado: 'enviado' }) }}",
+        "jsonBody": "={{ JSON.stringify({ comunicacion_id: $('Webhook comunicaciones').item.json.comunicacion_id, estado: 'enviado' }) }}",
         "options": {},
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "X-Webhook-Secret", "value": "={{ $env.WEBHOOK_SECRET }}" }
+            {
+              "name": "X-Webhook-Secret",
+              "value": "={{ $env.WEBHOOK_SECRET }}"
+            }
           ]
         }
       },
@@ -90,26 +111,91 @@
       "name": "Confirmar envío a la API",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [940, 300]
+      "position": [
+        940,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const subject = \"Comunicaci\\u00f3n EMC \\u2014 EXPOINCO 2027\";\nreturn $input.all().map((item) => {\n  const d = item.json || {};\n  const to = d.email || '';\n  const body = d.contenido ?? d.mensaje ?? '';\n  const b64 = (s) => Buffer.from(s, 'utf-8').toString('base64');\n  const mime =\n    'MIME-Version: 1.0\\r\\n' +\n    'Content-Type: text/plain; charset=\"UTF-8\"\\r\\n' +\n    'Content-Transfer-Encoding: 8bit\\r\\n' +\n    'To: ' + to + '\\r\\n' +\n    'Subject: =?UTF-8?B?' + b64(subject) + '?=\\r\\n' +\n    '\\r\\n' + body;\n  const raw = b64(mime).replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');\n  return { json: { ...d, raw } };\n});\n"
+      },
+      "id": "prep-email-01",
+      "name": "Preparar correo MIME",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        200
+      ]
     }
   ],
   "connections": {
     "Webhook comunicaciones": {
-      "main": [[{ "node": "¿Canal email?", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "¿Canal email?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "¿Canal email?": {
       "main": [
-        [{ "node": "Enviar por Gmail", "type": "main", "index": 0 }],
-        [{ "node": "Enviar por WhatsApp", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Preparar correo MIME",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar por WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Enviar por Gmail": {
-      "main": [[{ "node": "Confirmar envío a la API", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Confirmar envío a la API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Enviar por WhatsApp": {
-      "main": [[{ "node": "Confirmar envío a la API", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Confirmar envío a la API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar correo MIME": {
+      "main": [
+        [
+          {
+            "node": "Enviar por Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "settings": { "executionOrder": "v1" },
+  "settings": {
+    "executionOrder": "v1"
+  },
   "active": false
 }

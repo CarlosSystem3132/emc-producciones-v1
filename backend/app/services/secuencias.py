@@ -68,31 +68,35 @@ def ejecutar_paso(
             inscripcion.proxima_ejecucion = ahora + timedelta(hours=24)
             return "omitido"
 
+    agente = f"secuencia:{secuencia.nombre if secuencia else ''}"
+    # Registrar primero para obtener el ID: n8n lo necesita para confirmar el
+    # estado de vuelta en /webhooks/estado-comunicacion (docs/14).
+    comunicacion = Comunicacion(
+        empresa_id=empresa.id,
+        lead_id=inscripcion.lead_id,
+        contacto_id=inscripcion.contacto_id,
+        canal=canal,
+        plantilla_id=paso.plantilla_id,
+        contenido=contenido,
+        estado=EstadoComunicacion.pendiente,
+        agente=agente,
+    )
+    db.add(comunicacion)
+    db.flush()
+
     exito = despachar_n8n(
         "comunicacion.enviar",
         {
+            "comunicacion_id": str(comunicacion.id),
             "canal": canal.value,
             "empresa": empresa.razon_social,
             "contacto": contacto.nombre if contacto else None,
             "email": contacto.email if contacto else None,
             "whatsapp": contacto.whatsapp if contacto else None,
             "contenido": contenido,
-            "evento": f"secuencia:{secuencia.nombre if secuencia else ''}",
         },
     )
-
-    db.add(
-        Comunicacion(
-            empresa_id=empresa.id,
-            lead_id=inscripcion.lead_id,
-            contacto_id=inscripcion.contacto_id,
-            canal=canal,
-            plantilla_id=paso.plantilla_id,
-            contenido=contenido,
-            estado=EstadoComunicacion.enviado if exito else EstadoComunicacion.pendiente,
-            agente=f"secuencia:{secuencia.nombre if secuencia else ''}",
-        )
-    )
+    comunicacion.estado = EstadoComunicacion.enviado if exito else EstadoComunicacion.pendiente
 
     inscripcion.ultimo_envio = ahora
     inscripcion.paso_actual += 1
