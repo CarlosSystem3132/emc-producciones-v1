@@ -12,7 +12,7 @@ from pydantic import BaseModel, ConfigDict
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user, require_admin
+from app.api.deps import get_current_user, require_admin, require_admin_o_webhook
 from app.db.session import get_db
 from app.models.common import EstadoNotificacion, EstadoReserva
 from app.models.comunicaciones import Notificacion
@@ -100,7 +100,7 @@ def marcar_leida(
 @router.get("/reservas/por-expirar", response_model=list[ReservaPorExpirar])
 def reservas_por_expirar(
     db: Session = Depends(get_db),
-    _: Usuario = Depends(require_admin),
+    _: Usuario | None = Depends(require_admin_o_webhook),
     en_minutos: int = Query(default=15, ge=1, le=120),
 ) -> list[ReservaPorExpirar]:
     """Bloqueos temporales que expiran dentro de N minutos (recordatorios n8n).

@@ -147,6 +147,14 @@ uvicorn app.main:app --reload
 - `GET|POST /api/v1/patrocinadores` · `PATCH|DELETE /api/v1/patrocinadores/{id}` (admin).
 - `GET /api/v1/public/patrocinadores` — listado público de activos.
 
+## Datos semilla disponibles
+
+| Comando | Contenido | ¿Cuándo usarlo? |
+|---|---|---|
+| `python -m app.db.seed_plano` | 6 zonas + 52 stands del plano interactivo (inventario real) | Siempre |
+| `python -m app.db.seed_empresas` | **134 empresas reales de Bolivia** (prospección) + 5 plantillas operativas. Sin datos simulados: no crea ejecutivos, leads, reservas ni notificaciones | **Producción / poblado real** |
+| `python -m app.db.seed_demo` | Datos de demostración (ejecutivos de prueba, leads, reservas, pagos…) | Solo demos / QA, nunca producción |
+
 ## Migraciones (Alembic)
 
 ```bash

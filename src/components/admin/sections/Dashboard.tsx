@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api, money } from '../../../lib/adminApi';
+import { useAutoRefresh } from '../../../lib/useAutoRefresh';
 import type { DashboardData, Pronostico } from '../../../lib/adminApi';
 
 export default function Dashboard() {
@@ -8,7 +9,7 @@ export default function Dashboard() {
   const [alertasIA, setAlertasIA] = useState<{ tipo: string; mensaje: string }[]>([]);
   const [pronostico, setPronostico] = useState<Pronostico | null>(null);
 
-  useEffect(() => {
+  const cargar = useCallback(() => {
     api
       .get<DashboardData>('/dashboard')
       .then(setData)
@@ -17,6 +18,11 @@ export default function Dashboard() {
     api.get<{ tipo: string; mensaje: string }[]>('/alertas').then(setAlertasIA).catch(() => {});
     api.get<Pronostico>('/reportes/pronostico').then(setPronostico).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    cargar();
+  }, [cargar]);
+  useAutoRefresh(cargar); // refresco automático al cambiar datos
 
   if (error) return <p className="reserva-error">⚠️ {error}</p>;
   if (!data) return <p className="admin-loading">Cargando métricas…</p>;

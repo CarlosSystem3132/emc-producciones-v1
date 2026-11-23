@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useAutoRefresh } from '../../../lib/useAutoRefresh';
 import { api, money, getToken, ApiError } from '../../../lib/adminApi';
 import type { Pronostico } from '../../../lib/adminApi';
 
@@ -40,6 +41,7 @@ export default function Reportes() {
   useEffect(() => {
     load();
   }, [load]);
+  useAutoRefresh(load); // refresco automático al cambiar datos
 
   const exportar = async (tipo: 'ventas' | 'ocupacion' | 'embudo') => {
     try {

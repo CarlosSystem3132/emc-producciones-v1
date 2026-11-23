@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useAutoRefresh } from '../../../lib/useAutoRefresh';
 import { api, fecha, ApiError } from '../../../lib/adminApi';
 import type { Empresa, Lead, ListResponse } from '../../../lib/adminApi';
 
@@ -39,6 +40,7 @@ export default function Leads() {
   useEffect(() => {
     load();
   }, [load]);
+  useAutoRefresh(load); // refresco automático al cambiar datos
 
   useEffect(() => {
     api

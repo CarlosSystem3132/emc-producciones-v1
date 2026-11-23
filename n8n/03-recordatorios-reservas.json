@@ -25,9 +25,16 @@
       "parameters": {
         "method": "GET",
         "url": "={{ $env.API_URL || 'http://api:8000' }}/api/v1/reservas/por-expirar?en_minutos=15",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "options": {}
+        "options": {},
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Webhook-Secret",
+              "value": "={{ $env.WEBHOOK_SECRET }}"
+            }
+          ]
+        }
       },
       "id": "consultar-por-expirar",
       "name": "Consultar reservas por expirar",

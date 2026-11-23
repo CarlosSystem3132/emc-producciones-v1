@@ -294,3 +294,4 @@ export interface Pronostico {
 
 export const fecha = (iso: string | null | undefined): string =>
   iso ? new Date(iso).toLocaleString('es-BO', { dateStyle: 'short', timeStyle: 'short' }) : '—';
+

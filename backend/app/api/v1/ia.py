@@ -59,9 +59,9 @@ def clasificar(
     modo = agentes_config.modo_autonomia(db, "prospeccion")
     resultado = ia_comercial.clasificar_lead(db, lead)
     resultado["modo_autonomia"] = modo
+    resultado["aplicado"] = False
 
     if modo == "manual":
-        resultado["aplicado"] = False
         resultado["nota"] = "Agente en modo manual: la sugerencia no se aplica automáticamente."
         return resultado
 

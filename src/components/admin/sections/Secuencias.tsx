@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useAutoRefresh } from '../../../lib/useAutoRefresh';
 import { api, fecha, ApiError } from '../../../lib/adminApi';
 import type { Inscripcion, Secuencia } from '../../../lib/adminApi';
 
@@ -37,6 +38,7 @@ export default function Secuencias() {
   useEffect(() => {
     load();
   }, [load]);
+  useAutoRefresh(load); // refresco automático al cambiar datos
 
   const run = async (fn: () => Promise<unknown>, msg: string) => {
     try {

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useAutoRefresh } from '../../../lib/useAutoRefresh';
 import { api, fecha, money, ApiError } from '../../../lib/adminApi';
 import type { ListResponse, Reserva } from '../../../lib/adminApi';
 
@@ -27,6 +28,7 @@ export default function Reservas() {
   useEffect(() => {
     load();
   }, [load]);
+  useAutoRefresh(load); // refresco automático al cambiar datos
 
   const run = async (fn: () => Promise<unknown>, msg: string) => {
     try {

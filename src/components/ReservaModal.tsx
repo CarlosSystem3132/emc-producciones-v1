@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
-import { solicitarReserva } from '../lib/api';
+import { solicitarReserva, notificarDatosActualizados } from '../lib/api';
 import { getFuente, track } from '../utils/utm';
 import type { ReservaCreada } from '../lib/api';
 
@@ -77,6 +77,7 @@ export default function ReservaModal({ open, onClose, standLabel, standUuid }: R
         interes: `Stand ${standLabel}`,
       });
       setSuccess(reserva);
+      notificarDatosActualizados(); // refresca plano y contador sin recargar
       track('ReservaSolicitada', { content_name: standLabel });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo procesar la solicitud');

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useAutoRefresh } from '../../../lib/useAutoRefresh';
 import { api, ApiError } from '../../../lib/adminApi';
 import type { Patrocinador } from '../../../lib/adminApi';
 
@@ -28,6 +29,7 @@ export default function Patrocinadores() {
   useEffect(() => {
     load();
   }, [load]);
+  useAutoRefresh(load); // refresco automático al cambiar datos
 
   const run = async (fn: () => Promise<unknown>, msg: string) => {
     try {

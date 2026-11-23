@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import type { KeyboardEvent, MouseEvent } from 'react';
 import { motion } from 'framer-motion';
-import { fetchPlano } from '../lib/api';
+import { fetchPlano, EVENTO_DATOS } from '../lib/api';
 import type { StandPlano } from '../lib/api';
 import ReservaModal from './ReservaModal';
 
@@ -142,27 +142,42 @@ export default function InteractivePlano() {
   const [modalOpen, setModalOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Disponibilidad en tiempo real desde el backend FastAPI
+  // Disponibilidad en tiempo real desde el backend FastAPI.
+  // Se refresca al montar, cuando un dato cambia (EVENTO_DATOS), al recuperar
+  // el foco de la pestaña y cada 60 s: los cambios de reservas se ven sin F5.
   useEffect(() => {
     let cancelled = false;
-    fetchPlano()
-      .then((plano) => {
-        if (cancelled) return;
-        const byCodigo: Record<string, StandPlano> = {};
-        for (const s of plano.stands) byCodigo[s.codigo] = s;
-        setApiStands(byCodigo);
-        setStands(
-          STANDS.map((stand) => {
-            const match = byCodigo[String(stand.id)] ?? byCodigo[String(stand.id).padStart(2, '0')];
-            return match ? { ...stand, reserved: match.estado !== 'disponible' } : stand;
-          }),
-        );
-      })
-      .catch(() => {
-        // Backend fuera de línea: se mantiene la disponibilidad estática
-      });
+    const cargarPlano = () => {
+      fetchPlano()
+        .then((plano) => {
+          if (cancelled) return;
+          const byCodigo: Record<string, StandPlano> = {};
+          for (const s of plano.stands) byCodigo[s.codigo] = s;
+          setApiStands(byCodigo);
+          setStands(
+            STANDS.map((stand) => {
+              const match = byCodigo[String(stand.id)] ?? byCodigo[String(stand.id).padStart(2, '0')];
+              return match ? { ...stand, reserved: match.estado !== 'disponible' } : stand;
+            }),
+          );
+        })
+        .catch(() => {
+          // Backend fuera de línea: se mantiene la disponibilidad estática
+        });
+    };
+
+    cargarPlano();
+    window.addEventListener(EVENTO_DATOS, cargarPlano);
+    window.addEventListener('focus', cargarPlano);
+    document.addEventListener('visibilitychange', cargarPlano);
+    const intervalo = window.setInterval(cargarPlano, 60000);
+
     return () => {
       cancelled = true;
+      window.removeEventListener(EVENTO_DATOS, cargarPlano);
+      window.removeEventListener('focus', cargarPlano);
+      document.removeEventListener('visibilitychange', cargarPlano);
+      window.clearInterval(intervalo);
     };
   }, []);
 

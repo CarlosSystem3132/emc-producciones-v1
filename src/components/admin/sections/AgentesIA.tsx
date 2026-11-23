@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useAutoRefresh } from '../../../lib/useAutoRefresh';
 import { api, ApiError } from '../../../lib/adminApi';
 
 interface AgenteIA {
@@ -41,6 +42,7 @@ export default function AgentesIA() {
   useEffect(() => {
     load();
   }, [load]);
+  useAutoRefresh(load); // refresco automático al cambiar datos
 
   const guardar = async (clave: string) => {
     const cambios = editando[clave];

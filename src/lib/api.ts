@@ -6,6 +6,26 @@
 const API_URL: string =
   (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:8000/api/v1';
 
+// Diagnóstico: si el build quedó contra localhost pero se sirve desde un
+// dominio público, los datos nunca se actualizarán (VITE_API_URL es de build).
+if (typeof window !== 'undefined' && API_URL.includes('localhost') &&
+    !['localhost', '127.0.0.1'].includes(window.location.hostname)) {
+  console.warn(
+    `[EMC] VITE_API_URL apunta a ${API_URL} pero la página corre en ${window.location.hostname}. ` +
+    'Reconstruye la web con VITE_API_URL=https://tu-api/api/v1 (ver GUIA-DESPLIEGUE.md §5).',
+  );
+}
+
+/** Evento global: los datos del sistema cambiaron (reserva, venta, etc.).
+ * Plano, contador y paneles lo escuchan para refrescarse automáticamente. */
+export const EVENTO_DATOS = 'emc:datos-actualizados';
+
+export function notificarDatosActualizados(): void {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(EVENTO_DATOS));
+  }
+}
+
 // ---------- Tipos (espejo de los schemas del backend) ----------
 
 export interface StandPlano {

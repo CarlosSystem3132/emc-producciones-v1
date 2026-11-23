@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useAutoRefresh } from '../../../lib/useAutoRefresh';
 import { api, money, ApiError } from '../../../lib/adminApi';
 import type { ListResponse, Stand, Zona } from '../../../lib/adminApi';
 
@@ -27,6 +28,7 @@ export default function Stands() {
   useEffect(() => {
     load();
   }, [load]);
+  useAutoRefresh(load); // refresco automático al cambiar datos
 
   useEffect(() => {
     api

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useAutoRefresh } from '../../../lib/useAutoRefresh';
 import { api, fecha, ApiError } from '../../../lib/adminApi';
 import type { Notificacion } from '../../../lib/adminApi';
 
@@ -27,6 +28,7 @@ export default function Notificaciones() {
   useEffect(() => {
     load();
   }, [load]);
+  useAutoRefresh(load); // refresco automático al cambiar datos
 
   const marcarLeida = async (n: Notificacion) => {
     try {

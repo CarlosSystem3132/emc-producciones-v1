@@ -21,7 +21,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user, require_admin
+from app.api.deps import get_current_user, require_admin, require_admin_o_webhook
 from app.db.session import get_db
 from app.models.common import (
     EstadoLead,
@@ -439,8 +439,9 @@ def cancelar_reserva(
 @router.post("/liberar-expiradas")
 def liberar_manual(
     db: Session = Depends(get_db),
-    _: Usuario = Depends(require_admin),
+    _: Usuario | None = Depends(require_admin_o_webhook),
 ) -> dict:
-    """Disparador manual (también lo usará n8n en Fase 2)."""
+    """Disparador de liberación automática (n8n lo llama con X-Webhook-Secret
+    o un administrador con JWT)."""
     cantidad = liberar_expiradas(db)
     return {"liberadas": cantidad}

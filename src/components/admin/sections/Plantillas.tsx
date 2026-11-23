@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useAutoRefresh } from '../../../lib/useAutoRefresh';
 import { api, getToken, ApiError } from '../../../lib/adminApi';
 import type { Plantilla } from '../../../lib/adminApi';
 
@@ -30,6 +31,7 @@ export default function Plantillas({ isAdmin = false }: { isAdmin?: boolean }) {
   useEffect(() => {
     load();
   }, [load]);
+  useAutoRefresh(load); // refresco automático al cambiar datos
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -99,8 +99,8 @@ En **Environment** del servicio, completa:
 3. Abre **Shell** en Render y ejecuta los datos semilla:
 
 ```bash
-python -m app.db.seed_plano    # 6 zonas + 52 stands del plano
-python -m app.db.seed_demo     # empresas de prueba, leads, plantillas (opcional)
+python -m app.db.seed_plano      # 6 zonas + 52 stands del plano (inventario real)
+python -m app.db.seed_empresas   # 134 empresas reales + plantillas (sin datos simulados)
 ```
 
 4. **Verifica:**
@@ -311,5 +311,5 @@ cloudflared tunnel --url http://localhost:5678
 # Render Shell — datos y migraciones
 alembic upgrade head
 python -m app.db.seed_plano
-python -m app.db.seed_demo
+python -m app.db.seed_empresas
 ```

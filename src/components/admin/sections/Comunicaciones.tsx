@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useAutoRefresh } from '../../../lib/useAutoRefresh';
 import { api, fecha, getToken, ApiError } from '../../../lib/adminApi';
 import type { Campana, Comunicacion, Empresa, ListResponse, Plantilla } from '../../../lib/adminApi';
 
@@ -37,6 +38,7 @@ export default function Comunicaciones({ isAdmin = false }: { isAdmin?: boolean 
   useEffect(() => {
     load();
   }, [load]);
+  useAutoRefresh(load); // refresco automático al cambiar datos
 
   useEffect(() => {
     api.get<Plantilla[]>('/plantillas').then(setPlantillas).catch(() => {});

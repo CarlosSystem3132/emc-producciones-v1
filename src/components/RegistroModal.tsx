@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import { getFuente, track } from '../utils/utm';
+import { notificarDatosActualizados } from '../lib/api';
 
 const API_URL: string =
   (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:8000/api/v1';
@@ -85,6 +86,7 @@ export default function RegistroModal() {
         throw new Error(detail);
       }
       setSuccess(true);
+      notificarDatosActualizados(); // refresca contadores/paneles
       track('Lead', { content_name: 'registro_empresa' });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error inesperado');

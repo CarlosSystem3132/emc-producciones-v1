@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../../../lib/adminApi';
+import { useAutoRefresh } from '../../../lib/useAutoRefresh';
 
 interface DatosProspeccion {
   rubros_con_menor_cobertura: { rubro: string; empresas: number }[];
@@ -48,6 +49,7 @@ export default function Prospeccion() {
   useEffect(() => {
     load();
   }, [load]);
+  useAutoRefresh(load); // refresco automático al cambiar datos
 
   const copiar = async () => {
     if (!datos) return;
