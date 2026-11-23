@@ -17,7 +17,7 @@
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [
-        240,
+        200,
         300
       ]
     },
@@ -25,7 +25,6 @@
       "parameters": {
         "method": "GET",
         "url": "={{ $env.API_URL || 'http://api:8000' }}/api/v1/reservas/por-expirar?en_minutos=15",
-        "options": {},
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -34,6 +33,9 @@
               "value": "={{ $env.WEBHOOK_SECRET }}"
             }
           ]
+        },
+        "options": {
+          "timeout": 15000
         }
       },
       "id": "consultar-por-expirar",
@@ -41,22 +43,34 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        480,
+        420,
         300
       ],
-      "notes": "Header Auth: Authorization = Bearer <token admin>."
+      "notes": "Autenticado vía X-Webhook-Secret. La API debe filtrar reservas que aún no recibieron recordatorio."
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawItems = $input.all();\nconst normalized = [];\n\nfor (const item of rawItems) {\n  const payload = item.json || {};\n  const lista = Array.isArray(payload)\n    ? payload\n    : Array.isArray(payload.items)\n      ? payload.items\n      : Array.isArray(payload.reservas)\n        ? payload.reservas\n        : payload.id || payload.reserva_id || payload.email || payload.whatsapp\n          ? [payload]\n          : [];\n\n  for (const r of lista) {\n    const canal = (r.canal_preferido || r.canal || (r.whatsapp ? 'whatsapp' : 'email')).toLowerCase();\n    const texto = r.mensaje ?? r.contenido ?? '';\n    normalized.push({\n      json: {\n        ...r,\n        canal_normalizado: canal,\n        texto_normalizado: texto,\n      },\n    });\n  }\n}\n\nreturn normalized;\n"
+      },
+      "id": "normalizar-reservas-03",
+      "name": "Normalizar reservas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        300
+      ]
     },
     {
       "parameters": {
         "conditions": {
           "options": {
             "caseSensitive": true,
-            "typeValidation": "strict",
-            "version": 2
+            "typeValidation": "strict"
           },
           "conditions": [
             {
-              "leftValue": "={{ $json.canal_preferido }}",
+              "leftValue": "={{ $json.canal_normalizado }}",
               "rightValue": "whatsapp",
               "operator": {
                 "type": "string",
@@ -72,8 +86,37 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        700,
+        860,
         300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ ($json.whatsapp || '').trim() }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "if-wa-valido-03",
+      "name": "¿Tiene WhatsApp?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1080,
+        180
       ]
     },
     {
@@ -84,29 +127,58 @@
         "nodeCredentialType": "whatsAppApi",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ messaging_product: 'whatsapp', to: $json.whatsapp, type: 'text', text: { body: $json.mensaje } }) }}",
+        "jsonBody": "={{ JSON.stringify({ messaging_product: 'whatsapp', to: ($json.whatsapp || '').trim(), type: 'text', text: { body: $json.texto_normalizado } }) }}",
         "options": {}
       },
       "id": "recordatorio-whatsapp",
       "name": "Enviar recordatorio WhatsApp",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4,
+      "typeVersion": 4.2,
       "position": [
-        940,
-        180
+        1320,
+        160
       ]
     },
     {
       "parameters": {
-        "jsCode": "const subject = \"Recordatorio de reserva \\u2014 EXPOINCO 2027\";\nreturn $input.all().map((item) => {\n  const d = item.json || {};\n  const to = d.email || '';\n  const body = d.contenido ?? d.mensaje ?? '';\n  const b64 = (s) => Buffer.from(s, 'utf-8').toString('base64');\n  const mime =\n    'MIME-Version: 1.0\\r\\n' +\n    'Content-Type: text/plain; charset=\"UTF-8\"\\r\\n' +\n    'Content-Transfer-Encoding: 8bit\\r\\n' +\n    'To: ' + to + '\\r\\n' +\n    'Subject: =?UTF-8?B?' + b64(subject) + '?=\\r\\n' +\n    '\\r\\n' + body;\n  const raw = b64(mime).replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');\n  return { json: { ...d, raw } };\n});\n"
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ ($json.email || '').trim() }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "if-email-valido-03",
+      "name": "¿Tiene email?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1080,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const subject = \"Recordatorio de reserva \\u2014 EXPOINCO 2027\";\nreturn $input.all().map((item) => {\n  const d = item.json || {};\n  const to = (d.email || '').trim();\n  const body = d.texto_normalizado ?? d.contenido ?? d.mensaje ?? '';\n  const b64 = (s) => Buffer.from(s, 'utf-8').toString('base64');\n  const mime =\n    'MIME-Version: 1.0\\r\\n' +\n    'Content-Type: text/plain; charset=\"UTF-8\"\\r\\n' +\n    'Content-Transfer-Encoding: 8bit\\r\\n' +\n    'To: ' + to + '\\r\\n' +\n    'Subject: =?UTF-8?B?' + b64(subject) + '?=\\r\\n' +\n    '\\r\\n' + body;\n  const raw = b64(mime).replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');\n  return { json: { ...d, raw } };\n});\n"
       },
       "id": "prep-email-03",
       "name": "Preparar correo MIME",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        940,
-        420
+        1300,
+        400
       ]
     },
     {
@@ -123,10 +195,10 @@
       "id": "recordatorio-email",
       "name": "Enviar recordatorio email",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4,
+      "typeVersion": 4.2,
       "position": [
-        1180,
-        420
+        1520,
+        400
       ]
     }
   ],
@@ -146,6 +218,17 @@
       "main": [
         [
           {
+            "node": "Normalizar reservas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar reservas": {
+      "main": [
+        [
+          {
             "node": "¿Canal WhatsApp?",
             "type": "main",
             "index": 0
@@ -157,18 +240,42 @@
       "main": [
         [
           {
-            "node": "Enviar recordatorio WhatsApp",
+            "node": "¿Tiene WhatsApp?",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Preparar correo MIME",
+            "node": "¿Tiene email?",
             "type": "main",
             "index": 0
           }
         ]
+      ]
+    },
+    "¿Tiene WhatsApp?": {
+      "main": [
+        [
+          {
+            "node": "Enviar recordatorio WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "¿Tiene email?": {
+      "main": [
+        [
+          {
+            "node": "Preparar correo MIME",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
       ]
     },
     "Preparar correo MIME": {

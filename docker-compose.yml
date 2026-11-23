@@ -52,18 +52,12 @@ services:
     image: n8nio/n8n:latest
     profiles: ["tools"]
     environment:
-      # ⚠️ Las variables N8N_BASIC_AUTH_* están OBSOLETAS y son ignoradas.
-      # Se reemplazan por la configuración de cuenta de propietario nativa.
-      # Al primer arranque, n8n te pedirá crear el owner en la web.
       - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:-cambiar_esta_clave_larga_de_32_chars}
       - N8N_DEFAULT_ADMIN_EMAIL=${N8N_DEFAULT_ADMIN_EMAIL:-admin@local.test}
       - N8N_DEFAULT_ADMIN_PASSWORD=${N8N_DEFAULT_ADMIN_PASSWORD:-Admin123*}
-
-      # URL pública de n8n (para que los webhooks generen la URL correcta)
-      - WEBHOOK_URL=${N8N_WEBHOOK_URL:-http://localhost:5678/}
-
-      # Variables que consumen TUS workflows (los JSON las leen con $env.)
+      - WEBHOOK_URL=${N8N_PUBLIC_URL:-http://localhost:5678/}
       - API_URL=http://api:8000
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
       - WEBHOOK_SECRET=${WEBHOOK_SECRET:-local_webhook_secret_cambiar_esto}
       - WHATSAPP_PHONE_ID=${WHATSAPP_PHONE_ID:-0000000000}
     ports:

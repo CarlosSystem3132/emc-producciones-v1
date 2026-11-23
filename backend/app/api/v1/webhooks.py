@@ -1,9 +1,10 @@
 """Webhooks para orquestación con n8n (Fase 2).
 
 - POST /webhooks/estado-comunicacion: n8n confirma el resultado del envío
-  (entregado / leído / error) y actualiza la comunicación.
+  (enviado / entregado / leído / error) y actualiza la comunicación.
 - Autenticación por secreto compartido en el header X-Webhook-Secret.
 """
+import logging
 import uuid
 
 from fastapi import APIRouter, Depends, Header, HTTPException
@@ -15,6 +16,7 @@ from app.db.session import get_db
 from app.models.common import EstadoComunicacion
 from app.models.comunicaciones import Comunicacion
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/webhooks", tags=["webhooks"])
 
 
@@ -44,6 +46,11 @@ def estado_comunicacion(
 
     comunicacion.estado = payload.estado
     if payload.detalle:
-        comunicacion.agente = f"{comunicacion.agente or ''} · {payload.detalle}"[:255]
+        logger.info(
+            "Webhook estado-comunicacion %s -> %s: %s",
+            payload.comunicacion_id,
+            payload.estado.value,
+            payload.detalle,
+        )
     db.commit()
     return {"ok": True, "estado": comunicacion.estado.value}

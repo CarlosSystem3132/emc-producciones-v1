@@ -1,5 +1,5 @@
 {
-  "name": "04 Notificaciones al equipo",
+  "name": "EMC — Notificaciones al equipo",
   "nodes": [
     {
       "parameters": {
@@ -13,40 +13,99 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        240,
+        200,
         300
       ],
       "webhookId": "notificaciones"
     },
     {
       "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.canal }}",
+                    "rightValue": "whatsapp",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "whatsapp"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.canal }}",
+                    "rightValue": "email",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "email"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "none"
+        }
+      },
+      "id": "notif-switch",
+      "name": "Enrutar notificación",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        420,
+        300
+      ]
+    },
+    {
+      "parameters": {
         "conditions": {
           "options": {
             "caseSensitive": true,
-            "leftValue": "",
             "typeValidation": "loose"
           },
           "conditions": [
             {
-              "leftValue": "={{ $json.canal }}",
-              "rightValue": "whatsapp",
+              "leftValue": "={{ ($json.whatsapp || $json.para || '').trim() }}",
+              "rightValue": "",
               "operator": {
                 "type": "string",
-                "operation": "equals"
+                "operation": "notEmpty"
               }
             }
           ],
           "combinator": "and"
-        },
-        "options": {}
+        }
       },
-      "id": "notif-if",
-      "name": "¿Canal WhatsApp?",
+      "id": "notif-if-wa",
+      "name": "¿Tiene destino WhatsApp?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        460,
-        300
+        640,
+        180
       ]
     },
     {
@@ -57,7 +116,7 @@
         "nodeCredentialType": "whatsAppApi",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ messaging_product: 'whatsapp', to: $json.para, type: 'text', text: { body: $json.mensaje } }) }}",
+        "jsonBody": "={{ JSON.stringify({ messaging_product: 'whatsapp', to: ($json.whatsapp || $json.para || '').trim(), type: 'text', text: { body: $json.mensaje ?? $json.contenido ?? '' } }) }}",
         "options": {}
       },
       "id": "notif-whatsapp",
@@ -65,10 +124,52 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        700,
-        420
+        880,
+        160
       ],
       "notes": "Usa WhatsApp Cloud API. Configura WHATSAPP_PHONE_ID en el entorno de n8n."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ ($json.email || $json.para || '').trim() }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "notif-if-email",
+      "name": "¿Tiene destino email?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        640,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const subject = \"Notificaci\\u00f3n EMC \\u2014 EXPOINCO 2027\";\nreturn $input.all().map((item) => {\n  const d = item.json || {};\n  const to = (d.email || d.para || '').trim();\n  const body = d.mensaje ?? d.contenido ?? '';\n  const b64 = (s) => Buffer.from(s, 'utf-8').toString('base64');\n  const mime =\n    'MIME-Version: 1.0\\r\\n' +\n    'Content-Type: text/plain; charset=\"UTF-8\"\\r\\n' +\n    'Content-Transfer-Encoding: 8bit\\r\\n' +\n    'To: ' + to + '\\r\\n' +\n    'Subject: =?UTF-8?B?' + b64(subject) + '?=\\r\\n' +\n    '\\r\\n' + body;\n  const raw = b64(mime).replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');\n  return { json: { ...d, raw } };\n});\n"
+      },
+      "id": "prep-email-04",
+      "name": "Preparar correo MIME",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        860,
+        400
+      ]
     },
     {
       "parameters": {
@@ -86,23 +187,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        700,
-        200
+        1080,
+        400
       ],
-      "notes": "Adaptar el body 'raw' al formato MIME base64 que exige Gmail API."
-    },
-    {
-      "parameters": {
-        "jsCode": "const subject = \"Notificaci\\u00f3n EMC \\u2014 EXPOINCO 2027\";\nreturn $input.all().map((item) => {\n  const d = item.json || {};\n  const to = d.email || '';\n  const body = d.contenido ?? d.mensaje ?? '';\n  const b64 = (s) => Buffer.from(s, 'utf-8').toString('base64');\n  const mime =\n    'MIME-Version: 1.0\\r\\n' +\n    'Content-Type: text/plain; charset=\"UTF-8\"\\r\\n' +\n    'Content-Transfer-Encoding: 8bit\\r\\n' +\n    'To: ' + to + '\\r\\n' +\n    'Subject: =?UTF-8?B?' + b64(subject) + '?=\\r\\n' +\n    '\\r\\n' + body;\n  const raw = b64(mime).replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');\n  return { json: { ...d, raw } };\n});\n"
-      },
-      "id": "prep-email-04",
-      "name": "Preparar correo MIME",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        480,
-        200
-      ]
+      "notes": "Envía correo MIME en base64 URL-safe vía Gmail API."
     }
   ],
   "connections": {
@@ -110,14 +198,32 @@
       "main": [
         [
           {
-            "node": "¿Canal WhatsApp?",
+            "node": "Enrutar notificación",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "¿Canal WhatsApp?": {
+    "Enrutar notificación": {
+      "main": [
+        [
+          {
+            "node": "¿Tiene destino WhatsApp?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "¿Tiene destino email?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Tiene destino WhatsApp?": {
       "main": [
         [
           {
@@ -126,13 +232,19 @@
             "index": 0
           }
         ],
+        []
+      ]
+    },
+    "¿Tiene destino email?": {
+      "main": [
         [
           {
             "node": "Preparar correo MIME",
             "type": "main",
             "index": 0
           }
-        ]
+        ],
+        []
       ]
     },
     "Preparar correo MIME": {

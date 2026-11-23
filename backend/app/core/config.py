@@ -22,6 +22,7 @@ class Settings(BaseSettings):
 
     # n8n (webhook de automatizaciones: Gmail / WhatsApp)
     n8n_webhook_url: str = ""
+    n8n_notif_webhook_url: str = ""        # ← NUEVO: notificaciones a ejecutivos
     webhook_secret: str = ""
 
     # CORS: orígenes permitidos separados por coma (frontend Astro)

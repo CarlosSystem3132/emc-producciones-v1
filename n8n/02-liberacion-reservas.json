@@ -25,7 +25,6 @@
       "parameters": {
         "method": "POST",
         "url": "={{ $env.API_URL || 'http://api:8000' }}/api/v1/reservas/liberar-expiradas",
-        "options": {},
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -34,6 +33,9 @@
               "value": "={{ $env.WEBHOOK_SECRET }}"
             }
           ]
+        },
+        "options": {
+          "timeout": 15000
         }
       },
       "id": "liberar-expiradas",
@@ -44,7 +46,7 @@
         480,
         300
       ],
-      "notes": "Usa Header Auth: Authorization = Bearer <token admin>. Alternativa: autenticar con usuario/contraseña contra /auth/login."
+      "notes": "Autenticado vía header X-Webhook-Secret contra FastAPI."
     }
   ],
   "connections": {

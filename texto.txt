@@ -1,0 +1,48 @@
+quiero que verifiques lo siguiente: los envios masivos de correos a las empresas, cuando se registra un nuevo ejecutivo de ventas como el agente de IA notifica al ejecutivo. Ejemplo: Si tengo 4 ejecutivos de venta, Como el agente de IA asigna un cliente automaticamente a un ejecutivo de manera equitativa. Por que en los paneles no se muestra las empresas con sus datos completos como numero de contacto, correo, etc.
+
+
+curl.exe -X POST "http://localhost:5678/webhook/comunicaciones" `
+  -H "Content-Type: application/json" `
+  -d '{\"evento\":\"comunicacion.enviar\",\"canal\":\"email\",\"email\":\"darlosdj23@gmail.com\",\"contenido\":\"Prueba local EMC\"}'
+
+
+$body = @{
+  evento         = "comunicacion.enviar"
+  comunicacion_id = "00000000-0000-0000-0000-000000000001"
+  canal          = "email"
+  empresa        = "Constructora Andina SRL"
+  contacto       = "Carlos Mendoza"
+  email          = "darlosdj23@gmail.com"
+  whatsapp       = "+59170000000"
+  contenido      = "Prueba desde PowerShell para EXPOINCO 2027."
+} | ConvertTo-Json -Depth 4
+
+Invoke-RestMethod -Method Post `
+  -Uri "http://localhost:5678/webhook/comunicaciones" `
+  -ContentType "application/json" `
+  -Body $body
+
+
+$payloadWebhook = @{
+  evento          = "comunicacion.enviar"
+  comunicacion_id = "00000000-0000-0000-0000-000000000001"
+  canal           = "email"
+  empresa         = "Constructora Demo SRL"
+  contacto        = "Juan Pérez"
+  email           = "darlosdj23@gmail.com"
+  whatsapp        = "+59170000000"
+  contenido       = "Mensaje de prueba EXPOINCO 2027 desde PowerShell."
+} | ConvertTo-Json -Depth 4
+
+Invoke-RestMethod -Method Post `
+  -Uri "http://localhost:5678/webhook/comunicaciones" `
+  -ContentType "application/json" `
+  -Body $payloadWebhook
+
+docker compose up -d     
+docker compose --profile tools stop n8n    
+docker compose --profile tools restart n8n 
+docker compose --profile tools up -d n8n 
+
+docker compose exec api python -m app.db.seed_plano 
+docker compose exec api python -m app.db.seed_empresas

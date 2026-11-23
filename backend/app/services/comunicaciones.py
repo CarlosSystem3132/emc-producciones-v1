@@ -8,6 +8,7 @@ import json
 import re
 import urllib.error
 import urllib.request
+import uuid
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import func, select
@@ -62,9 +63,9 @@ def variables_disponibles(empresa: Empresa, contacto: Contacto | None) -> dict[s
 
 def validar_frecuencia(
     db: Session,
-    empresa_id: int,
-    contacto_id: int | None,
-    plantilla_id: int,
+    empresa_id: uuid.UUID,
+    contacto_id: uuid.UUID | None,
+    plantilla_id: uuid.UUID,
     canal: CanalComunicacion,
 ) -> str | None:
     """Devuelve un motivo de rechazo si se excede la frecuencia o hay duplicado."""
@@ -99,16 +100,28 @@ def validar_frecuencia(
 
 
 def despachar_n8n(evento: str, payload: dict) -> bool:
-    """Envía el evento al webhook de n8n (Gmail/WhatsApp). Devuelve True si
-    n8n lo recibió. Si n8n no está configurado o falla, la comunicación queda
-    registrada y puede reintentarse (n8n no contiene lógica crítica)."""
-    if not settings.n8n_webhook_url:
+    """Envía el evento al webhook de n8n correspondiente.
+    
+    - Eventos 'notificacion.*' → /webhook/notificaciones (workflow 04)
+    - Resto de eventos        → /webhook/comunicaciones (workflow 01)
+    """
+    if evento.startswith("notificacion."):
+        url = settings.n8n_notif_webhook_url
+    else:
+        url = settings.n8n_webhook_url
+
+    if not url:
         return False
+
+    headers = {"Content-Type": "application/json"}
+    if getattr(settings, "webhook_secret", None):
+        headers["X-Webhook-Secret"] = settings.webhook_secret
+
     try:
         req = urllib.request.Request(
-            settings.n8n_webhook_url,
+            url,
             data=json.dumps({"evento": evento, **payload}).encode("utf-8"),
-            headers={"Content-Type": "application/json"},
+            headers=headers,
             method="POST",
         )
         with urllib.request.urlopen(req, timeout=10):
@@ -125,7 +138,7 @@ def registrar_envio(
     plantilla: Plantilla,
     canal: CanalComunicacion,
     contenido_renderizado: str,
-    lead_id=None,
+    lead_id: uuid.UUID | None = None,
     agente: str = "panel",
 ) -> tuple[Comunicacion | None, str | None]:
     """Valida frecuencia/duplicados, registra la comunicacion y despacha a n8n.
@@ -153,6 +166,7 @@ def registrar_envio(
     db.flush()  # obtiene comunicacion.id sin confirmar la transacción
 
     # 2) Despachar a n8n con el ID y el destinatario reales.
+    #    n8n confirmará luego el estado definitivo ('enviado' o 'error') vía webhook.
     exito = despachar_n8n(
         "comunicacion.enviar",
         {
@@ -165,5 +179,5 @@ def registrar_envio(
             "contenido": contenido_renderizado,
         },
     )
-    comunicacion.estado = EstadoComunicacion.enviado if exito else EstadoComunicacion.pendiente
+    comunicacion.estado = EstadoComunicacion.pendiente if exito else EstadoComunicacion.error
     return comunicacion, None

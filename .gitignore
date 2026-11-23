@@ -39,3 +39,7 @@ docker-compose.override.yml
 *.crt
 credentials.json
 client_secret.json
+
+# Archivos de texto y documentos
+*.txt
+*.md
